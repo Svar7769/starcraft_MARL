@@ -337,10 +337,11 @@ def main(_):
         difficulty = get_difficulty(win_rate)
 
         with sc2_env.SC2Env(
-            map_name="Simple64",
+            # map_name="Simple64",
+            map_name="CollectMineralsAndGas",
             players=[
                 sc2_env.Agent(sc2_env.Race.terran),
-                sc2_env.Bot(sc2_env.Race.terran, difficulty)
+                # sc2_env.Bot(sc2_env.Race.terran, difficulty)
             ],
             agent_interface_format=features.AgentInterfaceFormat(
                 feature_dimensions=features.Dimensions(screen=84, minimap=64),
@@ -350,7 +351,7 @@ def main(_):
                 use_camera_position=True,
                 action_space=actions.ActionSpace.FEATURES
             ),
-            step_mul=16,
+            step_mul=8,
             visualize=False,
         ) as env:
             agent.reset()

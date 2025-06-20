@@ -26,9 +26,9 @@ MAP_NAME     = "CollectMineralsAndGas"
 SCREEN_SIZE  = 84
 MINIMAP_SIZE = 64
 STEP_MUL     = 16
-NB_ACTORS    = 2     # debug with 1
-T            = 128   # rollout length
-K            = 10     # PPO epochs
+NB_ACTORS    = 2
+T            = 128
+K            = 10
 BATCH_SIZE   = 256
 GAMMA        = 0.99
 GAE_LAMBDA   = 0.95
@@ -42,7 +42,6 @@ DEVICE       = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 _PLAYER_RELATIVE   = features.SCREEN_FEATURES.player_relative.index
 _UNIT_TYPE         = features.SCREEN_FEATURES.unit_type.index
 
-# our 4‐action discrete set
 ACTION_LIST = [
     'do_nothing',
     'select_idle',
@@ -137,36 +136,25 @@ def preprocess(ts):
     stacked = np.stack([pr, ut], axis=0)
     return torch.from_numpy(stacked).unsqueeze(0).float().to(DEVICE)
 
-# ─── Build & mask an action distribution ─────────────────────────────────────
+# ─── Which of our 4 actions are legal right now ─────────────────────────────
 def legal_actions(ts):
     avail = set(ts.observation.available_actions)
     fus   = ts.observation.feature_units
-
-    legal = [0]  # always allow do_nothing
-
-    # select_idle if the function is available
+    legal = [0]
     if FUNC_ID['select_idle'] in avail:
         legal.append(1)
-
-    # build_refinery if function is available and there is at least one geyser
-    if FUNC_ID['build_refinery'] in avail:
-        if any(u.unit_type == 342 for u in fus):
-            legal.append(2)
-
-    # harvest if function is available and there is at least one mineral patch
-    if FUNC_ID['harvest'] in avail:
-        if any(u.unit_type == 341 for u in fus):
-            legal.append(3)
-
+    if FUNC_ID['build_refinery'] in avail and any(u.unit_type==342 for u in fus):
+        legal.append(2)
+    if FUNC_ID['harvest'] in avail and any(u.unit_type==341 for u in fus):
+        legal.append(3)
     return legal
 
-# ─── pysc2 FunctionCall from discrete index ─────────────────────────────────
+# ─── pysc2 FunctionCall from discrete idx ───────────────────────────────────
 def make_pysc2_call(action_idx, ts):
     name = ACTION_LIST[action_idx]
     fid  = FUNC_ID[name]
-
     if name == 'select_idle':
-        return actions.FunctionCall(fid, [[2]])  # select all idle
+        return actions.FunctionCall(fid, [[2]])
     if name in ('build_refinery','harvest'):
         fus = ts.observation.feature_units
         if name=='build_refinery':
@@ -177,7 +165,6 @@ def make_pysc2_call(action_idx, ts):
             return actions.FunctionCall(actions.FUNCTIONS.no_op.id, [])
         u = random.choice(cand)
         return actions.FunctionCall(fid, [[0],[u.x,u.y]])
-
     return actions.FunctionCall(fid, [])
 
 # ─── PPO Training ────────────────────────────────────────────────────────────
@@ -192,7 +179,7 @@ def PPO(envs, model):
         if it % 1000 == 0:
             logger.info("🔄 Iter %d / %d", it, MAX_ITERS)
 
-        # storage
+        # storage buffers
         obs_buf  = torch.zeros(envs.nb, T, 2, SCREEN_SIZE, SCREEN_SIZE, device=DEVICE)
         act_buf  = torch.zeros(envs.nb, T,      dtype=torch.long, device=DEVICE)
         logp_buf = torch.zeros(envs.nb, T,                     device=DEVICE)
@@ -201,7 +188,10 @@ def PPO(envs, model):
         done_buf = torch.zeros(envs.nb, T,                     device=DEVICE)
         adv_buf  = torch.zeros(envs.nb, T,                     device=DEVICE)
 
-        # rollout
+        # track last cumulative score per actor
+        last_score = [0]*envs.nb
+
+        # ─── Rollout ─────────────────────────────────────────────────────────
         with torch.no_grad():
             for t in range(T):
                 for i in range(envs.nb):
@@ -209,19 +199,28 @@ def PPO(envs, model):
                     state = preprocess(ts)
                     logits, value = model(state)
 
-                    # mask out illegal
-                    LA    = legal_actions(ts)
-                    mask  = torch.full_like(logits, float('-inf'))
+                    # mask illegal
+                    LA   = legal_actions(ts)
+                    mask = torch.full_like(logits, float('-inf'))
                     mask[0, LA] = 0.0
-                    dist  = Categorical(logits=logits + mask)
+                    dist = Categorical(logits=logits + mask)
 
                     action = dist.sample()
                     logp   = dist.log_prob(action)
+                    fc     = make_pysc2_call(action.item(), ts)
 
-                    fc  = make_pysc2_call(action.item(), ts)
-                    ts2 = envs.step(i, fc)
-                    r   = ts2.reward
-                    d   = float(ts2.last())
+                    # step (fallback to no-op if SC2 rejects it)
+                    try:
+                        ts2 = envs.step(i, fc)
+                    except ValueError:
+                        ts2 = envs.step(i, actions.FunctionCall(actions.FUNCTIONS.no_op.id, []))
+
+                    # ← curriculum reward = Δscore_cumulative
+                    cur_score = int(ts2.observation['score_cumulative'][0])
+                    r = cur_score - last_score[i]
+                    last_score[i] = cur_score
+
+                    d = float(ts2.last())
 
                     obs_buf[i,t]  = state
                     act_buf[i,t]  = action
@@ -233,12 +232,12 @@ def PPO(envs, model):
                     if d:
                         envs.reset(i)
 
-            # bootstrap last values
+            # bootstrap final value
             for i in range(envs.nb):
                 ts = envs.obs[i]
                 val_buf[i,T] = model(preprocess(ts))[1]
 
-        # compute GAE
+        # ─── GAE & flatten ────────────────────────────────────────────────────
         for i in range(envs.nb):
             gae = 0
             for t in reversed(range(T)):
@@ -247,14 +246,13 @@ def PPO(envs, model):
                 gae  = delta + GAMMA*GAE_LAMBDA*mask*gae
                 adv_buf[i,t] = gae
 
-        # flatten
         b_s = obs_buf.reshape(-1,2,SCREEN_SIZE,SCREEN_SIZE)
         b_a = act_buf.reshape(-1)
         b_lp= logp_buf.reshape(-1)
         b_v = val_buf[:,:T].reshape(-1)
         b_ad= adv_buf.reshape(-1)
 
-        # PPO updates
+        # ─── PPO updates ─────────────────────────────────────────────────────
         for _ in range(K):
             ds     = TensorDataset(b_s,b_a,b_lp,b_v,b_ad)
             loader = DataLoader(ds, batch_size=BATCH_SIZE, shuffle=True)
@@ -264,18 +262,18 @@ def PPO(envs, model):
                 lp          = dist.log_prob(ac)
                 ratio       = torch.exp(lp - old_lp)
 
-                clip        = 0.1 * (1 - it/MAX_ITERS)
-                obj1        = adv * ratio
-                obj2        = adv * torch.clamp(ratio, 1-clip, 1+clip)
-                p_loss      = -torch.min(obj1,obj2).mean()
+                clip   = 0.1 * (1 - it/MAX_ITERS)
+                obj1   = adv * ratio
+                obj2   = adv * torch.clamp(ratio, 1-clip, 1+clip)
+                p_loss = -torch.min(obj1,obj2).mean()
 
-                ret        = adv + old_v
-                v1         = (val - ret).pow(2)
-                v2         = (torch.clamp(val,old_v-clip,old_v+clip)-ret).pow(2)
-                v_loss     = 0.5 * torch.max(v1,v2).mean()
+                ret     = adv + old_v
+                v1      = (val - ret).pow(2)
+                v2      = (torch.clamp(val,old_v-clip,old_v+clip)-ret).pow(2)
+                v_loss  = 0.5 * torch.max(v1,v2).mean()
 
-                entropy    = dist.entropy().mean()
-                loss       = p_loss + VF_COEF*v_loss - ENT_COEF*entropy
+                entropy = dist.entropy().mean()
+                loss    = p_loss + VF_COEF*v_loss - ENT_COEF*entropy
 
                 optimizer.zero_grad()
                 loss.backward()
