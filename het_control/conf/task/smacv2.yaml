@@ -1,0 +1,32 @@
+# het_control/conf/task/smacv2.yaml
+# BenchMARL TaskConfig for SMACv2
+_task_:  # this entry lets BenchMARL locate your class
+  _target_: het_control.environments.smacv2_task.SMACv2Task
+
+# SMACv2-specific hyperparameters:
+capability_config:
+  n_units: 5
+  n_enemies: 5
+  team_gen:
+    dist_type: weighted_teams
+    unit_types: [marine, marauder, medivac]
+    exception_unit_types: [medivac]
+    weights: [0.45, 0.45, 0.1]
+    observe: true
+  start_positions:
+    dist_type: surrounded_and_reflect
+    p: 0.5
+    n_enemies: 5
+    map_x: 32
+    map_y: 32
+
+map_name: 10gen_terran
+step_mul: 8
+
+# any args you want to forward into StarCraftCapabilityEnvWrapper:
+wrapper_kwargs:
+  debug: true
+  conic_fov: false
+  obs_own_pos: true
+  use_unit_ranges: true
+  min_attack_range: 2

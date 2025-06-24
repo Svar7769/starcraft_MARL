@@ -1,0 +1,29 @@
+# conf/config.yaml
+
+defaults:
+  - experiment: het_control_experiment
+  - algorithm: ippo
+  - task: smacv2
+  - model: hetcontrolmlpempirical
+  - model@critic_model: layers/mlp
+  - _self_
+
+seed: 0
+
+use_action_loss: True
+action_loss_lr: 0.00003
+
+simple_tag_freeze_policy: True
+simple_tag_freeze_policy_after_frames: 3_000_000
+
+# This goes under algorithm, *not* under experiment
+algorithm:
+  minibatch_advantage: false
+
+# Only experiment-specific keys here
+experiment:
+  buffer_device: cuda
+
+hydra:
+  searchpath:
+    - pkg://benchmarl/conf
