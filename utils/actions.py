@@ -6,8 +6,16 @@ from pysc2.lib import actions, features, units
 _PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _UNIT_TYPE = features.SCREEN_FEATURES.unit_type.index
 
-ACTION_LIST = ['do_nothing', 'move', 'attack', 'build', 'gather', 'upgrade', 'train']
-ACTION_INDEX = {name: idx for idx, name in enumerate(ACTION_LIST)}
+ACTION_LIST = [
+    "no_op",
+    "select_scv",
+    "build_supply_depot",
+    "build_barracks",
+    "train_marine",
+    "attack",
+    # ... add more as needed
+]
+ACTION_INDEX = {name: i for i, name in enumerate(ACTION_LIST)}
 
 SCREEN_SIZE = 84
 
@@ -46,7 +54,7 @@ def legal_actions(ts):
     """Return a list of legal action indices for the current timestep."""
     avail = set(ts.observation.available_actions)
     fus = ts.observation.feature_units
-    legal = [ACTION_INDEX['do_nothing']]
+    legal = [ACTION_INDEX['no_op']]  # <-- FIXED: was 'do_nothing'
 
     if actions.FUNCTIONS.Move_screen.id in avail:
         legal.append(ACTION_INDEX['move'])
@@ -73,102 +81,47 @@ def make_pysc2_call(action_idx, ts, pending=None):
     Convert action index to proper FunctionCall, handling multi-step actions.
     Returns (FunctionCall, pending_action_dict or None)
     """
+    action_name = ACTION_LIST[action_idx]
     obs = ts.observation
-    fus = obs.feature_units
-    avail = set(obs.available_actions)
+    units = getattr(obs, "raw_units", None)
+    available = obs["available_actions"] if "available_actions" in obs else []
 
-    # Handle pending actions first
-    if pending:
-        if pending['action_fn'] in avail:
-            args = pending['args']
-            # If the action requires coordinates, ensure they're safe
-            if len(args) > 1 and isinstance(args[1], list) and len(args[1]) == 2:
-                x, y = args[1]
-                return actions.FunctionCall(pending['action_fn'], [args[0], safe_coords(x, y)]), None
-            return actions.FunctionCall(pending['action_fn'], args), None
-        # If not available, do nothing
-        return actions.FunctionCall(actions.FUNCTIONS.no_op.id, []), None
+    if action_name == "no_op":
+        return actions.RAW_FUNCTIONS.no_op(), None
 
-    # Train action sequence (select building, then train)
-    if action_idx == ACTION_INDEX['train']:
-        buildings = [u for u in fus 
-                   if u.alliance == features.PlayerRelative.SELF 
-                   and u.unit_type in TERRAN_STRUCTURE_TYPES]
-        if not buildings or actions.FUNCTIONS.select_point.id not in avail:
-            return actions.FunctionCall(actions.FUNCTIONS.no_op.id, []), None
-        
-        building = random.choice(buildings)
-        select_action = actions.FunctionCall(
-            actions.FUNCTIONS.select_point.id,
-            [[0], safe_coords(building.x, building.y)]
-        )
-        
-        train_actions = [a for a in avail if 'Train' in actions.FUNCTIONS[a].name]
-        if train_actions:
-            return select_action, {
-                'action_fn': random.choice(train_actions),
-                'args': [[0]]
-            }
-        return select_action, None
+    if action_name == "select_scv":
+        if units is not None:
+            scvs = [u for u in units if u.unit_type == units.Terran.SCV and u.alliance == 1]
+            if scvs:
+                return actions.RAW_FUNCTIONS.select_unit("select", [scvs[0].tag]), None
 
-    # Select a unit first for most actions
-    units_self = [u for u in fus if u.alliance == features.PlayerRelative.SELF]
-    if not units_self or actions.FUNCTIONS.select_point.id not in avail:
-        return actions.FunctionCall(actions.FUNCTIONS.no_op.id, []), None
-    
-    unit = random.choice(units_self)
-    select_action = actions.FunctionCall(
-        actions.FUNCTIONS.select_point.id,
-        [[0], safe_coords(unit.x, unit.y)]
-    )
+    if action_name == "build_supply_depot":
+        if units is not None:
+            scvs = [u for u in units if u.unit_type == units.Terran.SCV and u.alliance == 1]
+            if scvs:
+                x, y = 40, 40  # or random/safe location
+                return actions.RAW_FUNCTIONS.Build_SupplyDepot_pt("now", scvs[0].tag, [x, y]), None
 
-    # Now handle the actual action types
-    if action_idx == ACTION_INDEX['move'] and actions.FUNCTIONS.Move_screen.id in avail:
-        x, y = np.random.randint(0, SCREEN_SIZE), np.random.randint(0, SCREEN_SIZE)
-        return select_action, {
-            'action_fn': actions.FUNCTIONS.Move_screen.id,
-            'args': [[0], [x, y]]
-        }
+    if action_name == "build_barracks":
+        if units is not None:
+            scvs = [u for u in units if u.unit_type == units.Terran.SCV and u.alliance == 1]
+            if scvs:
+                x, y = 45, 45
+                return actions.RAW_FUNCTIONS.Build_Barracks_pt("now", scvs[0].tag, [x, y]), None
 
-    elif action_idx == ACTION_INDEX['attack'] and actions.FUNCTIONS.Attack_screen.id in avail:
-        enemies = [u for u in fus if u.alliance == features.PlayerRelative.ENEMY]
-        if enemies:
-            target = random.choice(enemies)
-            return select_action, {
-                'action_fn': actions.FUNCTIONS.Attack_screen.id,
-                'args': [[0], [target.x, target.y]]
-            }
-    
-    elif action_idx == ACTION_INDEX['build'] and any('Build' in actions.FUNCTIONS[a].name for a in avail):
-        build_actions = [a for a in avail if 'Build' in actions.FUNCTIONS[a].name]
-        if build_actions:
-            build_action = random.choice(build_actions)
-            buildable = np.argwhere(obs.feature_screen.buildable == 1)
-            if buildable.size > 0:
-                y, x = random.choice(buildable)
-                return select_action, {
-                    'action_fn': build_action,
-                    'args': [[0], [x, y]]
-                }
-    
-    elif action_idx == ACTION_INDEX['gather'] and actions.FUNCTIONS.Harvest_Gather_screen.id in avail:
-        minerals = [u for u in fus if u.unit_type == 341]  # Mineral field ID
-        if minerals:
-            target = random.choice(minerals)
-            return select_action, {
-                'action_fn': actions.FUNCTIONS.Harvest_Gather_screen.id,
-                'args': [[0], [target.x, target.y]]
-            }
-    
-    elif action_idx == ACTION_INDEX['upgrade'] and any('Research' in actions.FUNCTIONS[a].name for a in avail):
-        upgrade_actions = [a for a in avail if 'Research' in actions.FUNCTIONS[a].name]
-        if upgrade_actions:
-            return select_action, {
-                'action_fn': random.choice(upgrade_actions),
-                'args': [[0]]
-            }
+    if action_name == "train_marine":
+        barracks = [u for u in units if u.unit_type == units.Terran.Barracks and u.alliance == 1]
+        if barracks:
+            return actions.RAW_FUNCTIONS.Train_Marine_quick("now", barracks[0].tag), None
 
-    return select_action, None
+    if action_name == "attack":
+        marines = [u for u in units if u.unit_type == units.Terran.Marine and u.alliance == 1]
+        enemies = [u for u in units if u.alliance == 4]
+        if marines and enemies:
+            return actions.RAW_FUNCTIONS.Attack_unit("now", marines[0].tag, [enemies[0].tag]), None
+
+    # fallback
+    return actions.RAW_FUNCTIONS.no_op(), None
 
 def make_pysc2_call_core(action_idx, ts):
     """
@@ -179,17 +132,17 @@ def make_pysc2_call_core(action_idx, ts):
     avail = set(obs.available_actions)
 
     if action_idx == ACTION_INDEX['do_nothing']:
-        return actions.FunctionCall(actions.FUNCTIONS.no_op.id, []), None
+        return actions.FunctionCall(actions.FUNCTIONS.no_op.id, [])
 
     if action_idx == ACTION_INDEX['move'] and actions.FUNCTIONS.Move_screen.id in avail:
         x, y = np.random.randint(0, SCREEN_SIZE), np.random.randint(0, SCREEN_SIZE)
-        return actions.FunctionCall(actions.FUNCTIONS.Move_screen.id, [[0], safe_coords(x, y)]), None
+        return actions.FunctionCall(actions.FUNCTIONS.Move_screen.id, [[0], safe_coords(x, y)])
 
     if action_idx == ACTION_INDEX['attack'] and actions.FUNCTIONS.Attack_screen.id in avail:
         enemies = [u for u in fus if u.alliance == features.PlayerRelative.ENEMY]
         if enemies:
             target = random.choice(enemies)
-            return actions.FunctionCall(actions.FUNCTIONS.Attack_screen.id, [[0], safe_coords(target.x, target.y)]), None
+            return actions.FunctionCall(actions.FUNCTIONS.Attack_screen.id, [[0], safe_coords(target.x, target.y)])
 
     if action_idx == ACTION_INDEX['build']:
         build_actions = [a for a in avail if 'Build' in actions.FUNCTIONS[a].name]
@@ -198,24 +151,24 @@ def make_pysc2_call_core(action_idx, ts):
             buildable = np.argwhere(obs.feature_screen.buildable == 1)
             if buildable.size > 0:
                 y, x = random.choice(buildable)
-                return actions.FunctionCall(build_action, [[0], safe_coords(x, y)]), None
+                return actions.FunctionCall(build_action, [[0], safe_coords(x, y)])
 
     if action_idx == ACTION_INDEX['gather'] and actions.FUNCTIONS.Harvest_Gather_screen.id in avail:
         minerals = [u for u in fus if u.unit_type == 341]
         if minerals:
             target = random.choice(minerals)
-            return actions.FunctionCall(actions.FUNCTIONS.Harvest_Gather_screen.id, [[0], safe_coords(target.x, target.y)]), None
+            return actions.FunctionCall(actions.FUNCTIONS.Harvest_Gather_screen.id, [[0], safe_coords(target.x, target.y)])
 
     if action_idx == ACTION_INDEX['upgrade']:
         upgrade_actions = [a for a in avail if 'Research' in actions.FUNCTIONS[a].name]
         if upgrade_actions:
             upgrade_action = random.choice(upgrade_actions)
-            return actions.FunctionCall(upgrade_action, [[0]]), None
+            return actions.FunctionCall(upgrade_action, [[0]])
 
     if action_idx == ACTION_INDEX['train']:
         train_actions = [a for a in avail if 'Train' in actions.FUNCTIONS[a].name]
         if train_actions:
             train_action = random.choice(train_actions)
-            return actions.FunctionCall(train_action, [[0]]), None
+            return actions.FunctionCall(train_action, [[0]])
 
-    return actions.FunctionCall(actions.FUNCTIONS.no_op.id, []), None
+    return actions.FunctionCall(actions.FUNCTIONS.no_op.id, [])

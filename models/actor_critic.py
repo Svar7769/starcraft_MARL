@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
+from config.config import SCREEN_SIZE # Import SCREEN_SIZE from config.py
 
 class ActorCritic(nn.Module):
-    def __init__(self, in_channels, nb_actions, screen_size):
+    def __init__(self, in_channels, nb_actions):
         super().__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels, 16, 8, stride=4), nn.Tanh(),
@@ -10,11 +11,11 @@ class ActorCritic(nn.Module):
             nn.Flatten(),
         )
         with torch.no_grad():
-            dummy = torch.zeros(1, in_channels, screen_size, screen_size)
+            dummy = torch.zeros(1, in_channels, SCREEN_SIZE, SCREEN_SIZE)
             conv_out = self.conv(dummy).shape[-1]
 
-        self.fc = nn.Sequential(nn.Linear(conv_out, 256), nn.Tanh())
-        self.actor = nn.Linear(256, nb_actions)
+        self.fc     = nn.Sequential(nn.Linear(conv_out, 256), nn.Tanh())
+        self.actor  = nn.Linear(256, nb_actions)
         self.critic = nn.Linear(256, 1)
 
     def forward(self, x):
