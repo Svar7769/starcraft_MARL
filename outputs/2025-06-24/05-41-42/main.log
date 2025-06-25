@@ -1,0 +1,55 @@
+[2025-06-24 05:41:42,730][__main__][INFO] - hyperparameters:
+  map_name: DefeatRoaches
+  screen_size: 84
+  minimap_size: 64
+  step_mul: 16
+  nb_actors: 1
+  T: 128
+  K: 10
+  batch_size: 256
+  gamma: 0.99
+  gae_lambda: 0.95
+  lr: 0.00025
+  ent_coef: 0.01
+  vf_coef: 1.0
+  max_iters: 1000
+  device: cpu
+  clip_param: 0.2
+pysc2:
+  sc2_run_config: ''
+  sc2_version: latest
+  render: false
+training:
+  checkpoint_dir: checkpoints
+  save_interval: 100
+  load_checkpoint: false
+  checkpoint_path: ''
+  multi_map: false
+  map_sequence:
+  - DefeatRoaches
+  - Simple64
+  - CollectMineralsAndGas
+action_list:
+- do_nothing
+- move
+- attack
+- build
+- gather
+- upgrade
+- train
+logging:
+  level: INFO
+  format: '%(asctime)s [%(levelname)s] %(message)s'
+  datefmt: '%H:%M:%S'
+
+[2025-06-24 05:41:42,741][env.sc2_env][INFO] - Initializing 1 SC2 env(s)...
+[2025-06-24 05:41:42,745][absl][INFO] - Launching SC2: D:\Games\StarCraft II\Versions/Base94137\SC2_x64.exe -listen 127.0.0.1 -port 50728 -dataDir D:\Games\StarCraft II\ -tempDir C:\Users\svarp\AppData\Local\Temp\sc-gx473nm4\ -displayMode 0 -windowwidth 640 -windowheight 480 -windowx 50 -windowy 50
+[2025-06-24 05:41:42,752][absl][INFO] - Connecting to: ws://127.0.0.1:50728/sc2api, attempt: 0, running: True
+[2025-06-24 05:41:45,792][absl][INFO] - Connecting to: ws://127.0.0.1:50728/sc2api, attempt: 1, running: True
+[2025-06-24 05:41:48,834][absl][INFO] - Connecting to: ws://127.0.0.1:50728/sc2api, attempt: 2, running: True
+[2025-06-24 05:41:55,740][absl][INFO] - Environment is ready
+[2025-06-24 05:41:55,741][absl][INFO] - Starting episode 1: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:41:57,298][ppo.trainer][INFO] - Starting PPO on DefeatRoaches for 1000 iterations
+[2025-06-24 05:41:57,298][ppo.trainer][INFO] - Iteration 0/1000
+[2025-06-24 05:41:57,306][ppo.trainer][INFO] - Saved checkpoint to checkpoints\ppo_DefeatRoaches_iter0.pt
+[2025-06-24 05:41:57,628][absl][INFO] - Environment Close

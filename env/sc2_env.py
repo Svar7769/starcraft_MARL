@@ -1,6 +1,6 @@
 from pysc2.env import sc2_env
 from pysc2.lib import actions, features
-from config.config import MAP_NAME, SCREEN_SIZE, MINIMAP_SIZE, STEP_MUL, logger # Import from config.py
+from config.spartan import MAP_NAME, SCREEN_SIZE, MINIMAP_SIZE, STEP_MUL, logger # Import from config.py
 
 class SC2Envs: # Renamed from SC2EnvsMulti to SC2Envs for simplicity based on your structure
     def __init__(self, nb_actor):

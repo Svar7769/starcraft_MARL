@@ -1,0 +1,116 @@
+[2025-06-24 05:35:19,818][__main__][INFO] - hyperparameters:
+  map_name: DefeatRoaches
+  screen_size: 84
+  minimap_size: 64
+  step_mul: 16
+  nb_actors: 1
+  T: 128
+  K: 10
+  batch_size: 256
+  gamma: 0.99
+  gae_lambda: 0.95
+  lr: 0.00025
+  ent_coef: 0.01
+  vf_coef: 1.0
+  max_iters: 1000
+  device: cpu
+  clip_param: 0.2
+pysc2:
+  sc2_run_config: ''
+  sc2_version: latest
+  render: false
+training:
+  checkpoint_dir: checkpoints
+  save_interval: 100
+  load_checkpoint: false
+  checkpoint_path: ''
+  multi_map: false
+  map_sequence:
+  - DefeatRoaches
+  - Simple64
+  - CollectMineralsAndGas
+action_list:
+- do_nothing
+- move
+- attack
+- build
+- gather
+- upgrade
+- train
+logging:
+  level: INFO
+  format: '%(asctime)s [%(levelname)s] %(message)s'
+  datefmt: '%H:%M:%S'
+
+[2025-06-24 05:35:19,829][env.sc2_env][INFO] - Initializing 1 SC2 env(s)...
+[2025-06-24 05:35:19,832][absl][INFO] - Launching SC2: D:\Games\StarCraft II\Versions/Base94137\SC2_x64.exe -listen 127.0.0.1 -port 50299 -dataDir D:\Games\StarCraft II\ -tempDir C:\Users\svarp\AppData\Local\Temp\sc-uuen9x7e\ -displayMode 0 -windowwidth 640 -windowheight 480 -windowx 50 -windowy 50
+[2025-06-24 05:35:20,514][absl][INFO] - Connecting to: ws://127.0.0.1:50299/sc2api, attempt: 0, running: True
+[2025-06-24 05:35:23,554][absl][INFO] - Connecting to: ws://127.0.0.1:50299/sc2api, attempt: 1, running: True
+[2025-06-24 05:35:26,591][absl][INFO] - Connecting to: ws://127.0.0.1:50299/sc2api, attempt: 2, running: True
+[2025-06-24 05:35:35,362][absl][INFO] - Environment is ready
+[2025-06-24 05:35:35,362][absl][INFO] - Starting episode 1: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:35:46,212][ppo.trainer][INFO] - Starting PPO on DefeatRoaches for 1000 iterations
+[2025-06-24 05:35:46,213][ppo.trainer][INFO] - Iteration 0/1000
+[2025-06-24 05:35:46,244][ppo.trainer][INFO] - Saved checkpoint to checkpoints\ppo_DefeatRoaches_iter0.pt
+[2025-06-24 05:35:48,465][absl][INFO] - Episode 1 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(35)]
+[2025-06-24 05:35:52,120][absl][INFO] - Starting episode 2: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:35:54,387][absl][INFO] - Episode 2 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:35:57,889][absl][INFO] - Starting episode 3: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:00,270][absl][INFO] - Episode 3 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:03,872][absl][INFO] - Starting episode 4: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:05,947][absl][INFO] - Episode 4 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:09,482][absl][INFO] - Starting episode 5: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:11,769][absl][INFO] - Episode 5 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(-2)]
+[2025-06-24 05:36:15,089][absl][INFO] - Starting episode 6: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:17,381][absl][INFO] - Episode 6 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(-2)]
+[2025-06-24 05:36:20,690][absl][INFO] - Starting episode 7: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:22,943][absl][INFO] - Episode 7 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:26,235][absl][INFO] - Starting episode 8: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:28,848][absl][INFO] - Episode 8 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:32,174][absl][INFO] - Starting episode 9: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:34,619][absl][INFO] - Episode 9 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:38,505][absl][INFO] - Starting episode 10: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:41,351][absl][INFO] - Episode 10 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:44,818][absl][INFO] - Starting episode 11: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:47,274][absl][INFO] - Episode 11 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:50,864][absl][INFO] - Starting episode 12: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:53,351][absl][INFO] - Episode 12 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:36:56,699][absl][INFO] - Starting episode 13: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:36:58,919][absl][INFO] - Episode 13 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:02,273][absl][INFO] - Starting episode 14: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:04,483][absl][INFO] - Episode 14 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:07,854][absl][INFO] - Starting episode 15: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:10,017][absl][INFO] - Episode 15 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:13,408][absl][INFO] - Starting episode 16: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:15,500][absl][INFO] - Episode 16 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:18,889][absl][INFO] - Starting episode 17: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:20,990][absl][INFO] - Episode 17 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:24,483][absl][INFO] - Starting episode 18: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:26,640][absl][INFO] - Episode 18 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:30,032][absl][INFO] - Starting episode 19: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:32,378][absl][INFO] - Episode 19 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:35,788][absl][INFO] - Starting episode 20: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:38,309][absl][INFO] - Episode 20 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:41,916][absl][INFO] - Starting episode 21: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:44,483][absl][INFO] - Episode 21 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:47,957][absl][INFO] - Starting episode 22: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:50,279][absl][INFO] - Episode 22 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:53,735][absl][INFO] - Starting episode 23: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:37:55,988][absl][INFO] - Episode 23 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:37:59,447][absl][INFO] - Starting episode 24: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:02,042][absl][INFO] - Episode 24 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:05,975][absl][INFO] - Starting episode 25: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:09,511][absl][INFO] - Episode 25 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:13,626][absl][INFO] - Starting episode 26: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:16,572][absl][INFO] - Episode 26 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:20,238][absl][INFO] - Starting episode 27: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:22,896][absl][INFO] - Episode 27 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:26,928][absl][INFO] - Starting episode 28: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:29,273][absl][INFO] - Episode 28 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:32,697][absl][INFO] - Starting episode 29: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:35,233][absl][INFO] - Episode 29 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:38,635][absl][INFO] - Starting episode 30: [terran, zerg] on DefeatRoaches
+[2025-06-24 05:38:40,982][absl][INFO] - Episode 30 finished after 1920 game steps. Outcome: [1], reward: [np.int32(0)], score: [np.int32(0)]
+[2025-06-24 05:38:44,541][absl][INFO] - Environment Close
+[2025-06-24 05:38:44,566][absl][INFO] - Shutdown gracefully.
+[2025-06-24 05:38:44,567][absl][INFO] - Shutdown with return code: 1

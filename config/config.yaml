@@ -16,7 +16,7 @@ hyperparameters:
   ent_coef: 0.01
   vf_coef: 1.0
   max_iters: 1000
-  device: "cuda"
+  device: "cpu"
   clip_param: 0.2
 
 pysc2:

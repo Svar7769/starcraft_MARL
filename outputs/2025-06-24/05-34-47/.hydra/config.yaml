@@ -1,0 +1,43 @@
+hyperparameters:
+  map_name: DefeatRoaches
+  screen_size: 84
+  minimap_size: 64
+  step_mul: 16
+  nb_actors: 1
+  T: 128
+  K: 10
+  batch_size: 256
+  gamma: 0.99
+  gae_lambda: 0.95
+  lr: 0.00025
+  ent_coef: 0.01
+  vf_coef: 1.0
+  max_iters: 1000
+  device: cuda
+  clip_param: 0.2
+pysc2:
+  sc2_run_config: ''
+  sc2_version: latest
+  render: false
+training:
+  checkpoint_dir: checkpoints
+  save_interval: 100
+  load_checkpoint: false
+  checkpoint_path: ''
+  multi_map: false
+  map_sequence:
+  - DefeatRoaches
+  - Simple64
+  - CollectMineralsAndGas
+action_list:
+- do_nothing
+- move
+- attack
+- build
+- gather
+- upgrade
+- train
+logging:
+  level: INFO
+  format: '%(asctime)s [%(levelname)s] %(message)s'
+  datefmt: '%H:%M:%S'
